@@ -2,9 +2,12 @@
 "use strict";
 process.mainModule = module
 var headlessWallet = require('headless-byteball');
+var conf = require('byteballcore/conf.js');
 var eventBus = require('byteballcore/event_bus.js');
 var request = require('request');
 var async = require('async');
+
+headlessWallet.setupChatEventHandlers();
 
 function log2Everywhere(text){
     console.error(text);
@@ -82,12 +85,17 @@ function initJob(){
             console.log("DataFeed: published");
         });
     }
-    
-    walletGeneral.readMyAddresses(function(addresses){
-        address = addresses[0];
+    var initAddressAndRun = function(addr){
+        address = addr;
+        console.log("DataFeed address:"+address);
         runJob();
         setInterval(runJob,300000);
-    });
+    }
+    
+    if (conf.bSingleAddress)
+        headlessWallet.readSingleAddress(initAddressAndRun);
+    else
+        initAddressAndRun(conf.dataFeedAddress);
 }
 
 function getYahooData(datafeed, cb){
