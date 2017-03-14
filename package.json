@@ -1,0 +1,32 @@
+{
+  "name": "byteball-datafeeder",
+  "description": "Byteball data feeder",
+  "author": "DevAlexey",
+  "version": "0.1.0",
+  "main": "start.js",
+  "keywords": [
+    "wallet",
+    "headless",
+    "byteball",
+    "full node",
+    "data feed"
+  ],
+  "license": "MIT",
+  "repository": {
+    "url": "git://github.com/DevAlexey/headless-datafeeder.git",
+    "type": "git"
+  },
+  "bugs": {
+    "url": "https://github.com/DevAlexey/headless-datafeeder/issues"
+  },
+  "browser": {
+    "request": "browser-request",
+    "secp256k1": "secp256k1/js"
+  },
+  "dependencies": {
+    "async": "^1.5.2",
+    "byteballcore": "^0.1.0",
+    "headless-byteball": "git+https://github.com/byteball/headless-byteball.git",
+    "request": "^2.79.0"
+  }
+}
