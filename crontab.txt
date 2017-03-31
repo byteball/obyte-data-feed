@@ -1,0 +1,1 @@
+*/15 * * * * cd byteball-data-feed; node check_daemon.js 1>>~/.config/byteball-data-feed/check_daemon.log 2>>~/.config/byteball-data-feed/check_daemon.err

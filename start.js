@@ -9,24 +9,13 @@ var eventBus = require('byteballcore/event_bus.js');
 var objectHash = require('byteballcore/object_hash.js');
 var request = require('request');
 var async = require('async');
+var notifications = require('./notifications.js');
 
 var dataFeedAddress;
 var maxDataFeedComission = 0;
 
 headlessWallet.setupChatEventHandlers();
 
-function log2Everywhere(text){
-    console.error(text);
-	console.log(text);
-}
-
-function onError(err){
-    log2Everywhere("DataFeed ERROR:"+err);
-}
-
-function onNotEnoughFunds(err){
-    log2Everywhere("DataFeed WARN:"+err);
-}
 
 function createFloatNumberProcessor(decimalPointPrecision){
     var decimalPointMult = Math.pow(10, decimalPointPrecision);
@@ -76,11 +65,11 @@ function createOptimalOutputs(handleOutputs){
 			[dataFeedAddress, 2*maxDataFeedComission],
 			function(rows){
 				if (rows.length === 0){
-					log2Everywhere('DataFeed WARN:only '+count+" spendable outputs left, and can't add more");
+					notifications.notifyAdminAboutPostingProblem('DataFeed WARN:only '+count+" spendable outputs left, and can't add more");
 					return handleOutputs(arrOutputs);
 				}
 				var amount = rows[0].amount;
-				log2Everywhere('DataFeed WARN:only '+count+" spendable outputs left, will split an output of "+amount);
+			//	notifications.notifyAdminAboutPostingProblem('DataFeed WARN:only '+count+" spendable outputs left, will split an output of "+amount);
 				arrOutputs.push({amount: Math.round(amount/2), address: dataFeedAddress});
 				handleOutputs(arrOutputs);
 			}
@@ -124,13 +113,11 @@ function initJob(){
                     function(cb){ getYahooData(datafeed, cb) },
                     function(cb){ getBTCEData(datafeed, cb) }
                 ], function(err){
-                    if(err){
-                        cb(err);
-                        return;
-                    }
+                    if (err)
+                        return cb(err);
                     var cbs = composer.getSavingCallbacks({
                         ifNotEnoughFunds: function(err){ 
-                            onNotEnoughFunds(err);
+                            notifications.notifyAdminAboutPostingProblem(err);
                             cb();
                         },
                         ifError: cb,
@@ -149,10 +136,8 @@ function initJob(){
                 });
             }
         ], function(err){
-            if(err){
-                onError(err);
-                return;
-            }
+            if (err)
+                return notifications.notifyAdminAboutPostingProblem(err);
             console.log("DataFeed: published");
         });
     }
