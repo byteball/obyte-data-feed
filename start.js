@@ -16,6 +16,7 @@ const POSTING_PERIOD = 600*1000;
 var dataFeedAddress;
 var maxDataFeedComission = 700;
 var count_postings_available = 0;
+var prev_datafeed;
 
 headlessWallet.setupChatEventHandlers();
 
@@ -25,6 +26,20 @@ function createFloatNumberProcessor(decimalPointPrecision){
 	return function processValue(value){
 		return Math.round(value * decimalPointMult);
 	}
+}
+
+function removeUnchanged(datafeed){
+	var filtered_datafeed = {};
+	if (prev_datafeed){
+		for (var name in datafeed){
+			if (datafeed[name] !== prev_datafeed[name])
+				filtered_datafeed[name] = datafeed[name];
+		}
+	}
+	else
+		filtered_datafeed = datafeed;
+	prev_datafeed = datafeed;
+	return filtered_datafeed;
 }
 
 function composeDataFeedAndPaymentJoint(from_address, payload, outputs, signer, callbacks){
@@ -145,6 +160,9 @@ function initJob(){
 				//	function(cb){ getBTCEData(datafeed, cb) }
 				], function(){
 					if (Object.keys(datafeed).length === 0) // all data sources failed, nothing to post
+						return cb();
+					datafeed = removeUnchanged(datafeed);
+					if (Object.keys(datafeed).length === 0) // no changes, nothing to post
 						return cb();
 					var cbs = composer.getSavingCallbacks({
 						ifNotEnoughFunds: function(err){ 
