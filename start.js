@@ -175,9 +175,9 @@ function getYahooData(datafeed, cb){
 	request(apiUri, function (error, response, body){
 		if (!error && response.statusCode == 200) {
 			var jsonResult = JSON.parse(body);
-			datafeed.EURUSD = processFloat(jsonResult.query.results.rate[0].Rate);
-			datafeed.GBPUSD = processFloat(jsonResult.query.results.rate[1].Rate);
-			datafeed.USDJPY = processFloat(jsonResult.query.results.rate[2].Rate);
+			datafeed.EUR_USD = processFloat(jsonResult.query.results.rate[0].Rate);
+			datafeed.GBP_USD = processFloat(jsonResult.query.results.rate[1].Rate);
+			datafeed.USD_JPY = processFloat(jsonResult.query.results.rate[2].Rate);
 		}
 		else
 			notifications.notifyAdminAboutPostingProblem("getting btc-e data failed: "+error+", status="+response.statusCode);
@@ -193,12 +193,12 @@ function getBTCEData(datafeed, cb){
 	request(apiUri, function (error, response, body){
 		if (!error && response.statusCode == 200) {
 			var jsonResult = JSON.parse(body);
-			datafeed.BTCUSD = processFloat(jsonResult.btc_usd.last);
-			datafeed.BTCUSD_AVG = processFloat(jsonResult.btc_usd.avg);
-			datafeed.ETHBTC = processFloat(jsonResult.eth_btc.last);
-			datafeed.ETHBTC_AVG = processFloat(jsonResult.eth_btc.avg);
-			datafeed.ETHUSD = processFloat(jsonResult.eth_usd.last);
-			datafeed.ETHUSD_AVG = processFloat(jsonResult.eth_usd.avg);
+			datafeed.BTCE_BTC_USD = processFloat(jsonResult.btc_usd.last);
+			datafeed.BTCE_BTC_USD_AVG = processFloat(jsonResult.btc_usd.avg);
+			datafeed.BTCE_ETH_BTC = processFloat(jsonResult.eth_btc.last);
+			datafeed.BTCE_ETH_BTC_AVG = processFloat(jsonResult.eth_btc.avg);
+			datafeed.BTCE_ETH_USD = processFloat(jsonResult.eth_usd.last);
+			datafeed.BTCE_ETH_USD_AVG = processFloat(jsonResult.eth_usd.avg);
 		}
 		else
 			notifications.notifyAdminAboutPostingProblem("getting btc-e data failed: "+error+", status="+response.statusCode);
