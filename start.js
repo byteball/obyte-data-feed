@@ -18,10 +18,10 @@ headlessWallet.setupChatEventHandlers();
 
 
 function createFloatNumberProcessor(decimalPointPrecision){
-    var decimalPointMult = Math.pow(10, decimalPointPrecision);
-    return function processValue(value){
-        return Math.round(value * decimalPointMult);
-    }
+	var decimalPointMult = Math.pow(10, decimalPointPrecision);
+	return function processValue(value){
+		return Math.round(value * decimalPointMult);
+	}
 }
 
 function composeDataFeedAndPaymentJoint(from_address, payload, outputs, signer, callbacks){
@@ -78,105 +78,105 @@ function createOptimalOutputs(handleOutputs){
 }
 
 function initJob(){
-    var network = require('byteballcore/network.js');
-    composer = require('byteballcore/composer.js');
-    
-    if (conf.bSingleAddress)
-        headlessWallet.readSingleAddress(initAddressAndRun);
-    else
-        initAddressAndRun(conf.dataFeedAddress);
-        
-    function initAddressAndRun(address){
-        dataFeedAddress = address;
-        console.log("DataFeed address:"+dataFeedAddress);
-        runJob();
-        setInterval(runJob,300000);
-    }
-        
-    function runJob(){
-        console.log("DataFeed: job started");
-        async.series([
-            function(cb){
-                db.query(
-                    "select * from outputs where address=? and is_spent=0", 
-                    [dataFeedAddress],
-                    function(rows){
-                        if (rows.length > 0)
-                            return cb();
-                        cb("No spendable outputs");
-                    }
-                );
-            },
-            function(cb){
-                var datafeed={};
-                async.parallel([
-                    function(cb){ getYahooData(datafeed, cb) },
-                    function(cb){ getBTCEData(datafeed, cb) }
-                ], function(err){
-                    if (err)
-                        return cb(err);
-                    var cbs = composer.getSavingCallbacks({
-                        ifNotEnoughFunds: function(err){ 
-                            notifications.notifyAdminAboutPostingProblem(err);
-                            cb();
-                        },
-                        ifError: cb,
-                        ifOk: function(objJoint){
-                            var feedComission = objJoint.unit.headers_commission + objJoint.unit.payload_commission; 
-                            if(maxDataFeedComission < feedComission) maxDataFeedComission = feedComission;
-                            // console.log("DataFeed:"+JSON.stringify(objJoint));
-                            network.broadcastJoint(objJoint);
-                            cb();
-                        }
-                    });
-                    datafeed.timestamp = Date.now();
-                    createOptimalOutputs(function(arrOutputs){
-                		composeDataFeedAndPaymentJoint(dataFeedAddress, datafeed, arrOutputs, headlessWallet.signer, cbs)
-                	});
-                });
-            }
-        ], function(err){
-            if (err)
-                return notifications.notifyAdminAboutPostingProblem(err);
-            console.log("DataFeed: published");
-        });
-    }
+	var network = require('byteballcore/network.js');
+	composer = require('byteballcore/composer.js');
+	
+	if (conf.bSingleAddress)
+		headlessWallet.readSingleAddress(initAddressAndRun);
+	else
+		initAddressAndRun(conf.dataFeedAddress);
+		
+	function initAddressAndRun(address){
+		dataFeedAddress = address;
+		console.log("DataFeed address:"+dataFeedAddress);
+		runJob();
+		setInterval(runJob,300000);
+	}
+		
+	function runJob(){
+		console.log("DataFeed: job started");
+		async.series([
+			function(cb){
+				db.query(
+					"select * from outputs where address=? and is_spent=0", 
+					[dataFeedAddress],
+					function(rows){
+						if (rows.length > 0)
+							return cb();
+						cb("No spendable outputs");
+					}
+				);
+			},
+			function(cb){
+				var datafeed={};
+				async.parallel([
+					function(cb){ getYahooData(datafeed, cb) },
+					function(cb){ getBTCEData(datafeed, cb) }
+				], function(err){
+					if (err)
+						return cb(err);
+					var cbs = composer.getSavingCallbacks({
+						ifNotEnoughFunds: function(err){ 
+							notifications.notifyAdminAboutPostingProblem(err);
+							cb();
+						},
+						ifError: cb,
+						ifOk: function(objJoint){
+							var feedComission = objJoint.unit.headers_commission + objJoint.unit.payload_commission; 
+							if(maxDataFeedComission < feedComission) maxDataFeedComission = feedComission;
+							// console.log("DataFeed:"+JSON.stringify(objJoint));
+							network.broadcastJoint(objJoint);
+							cb();
+						}
+					});
+					datafeed.timestamp = Date.now();
+					createOptimalOutputs(function(arrOutputs){
+						composeDataFeedAndPaymentJoint(dataFeedAddress, datafeed, arrOutputs, headlessWallet.signer, cbs)
+					});
+				});
+			}
+		], function(err){
+			if (err)
+				return notifications.notifyAdminAboutPostingProblem(err);
+			console.log("DataFeed: published");
+		});
+	}
 }
 
 function getYahooData(datafeed, cb){
-    
-    var apiUri = 'https://query.yahooapis.com/v1/public/yql?q=select+*+from+yahoo.finance.xchange+where+pair+=+%22EURUSD,GBPUSD,USDJPY%22&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys&cb=';
-    
-    var processFloat = createFloatNumberProcessor(4);
+	
+	var apiUri = 'https://query.yahooapis.com/v1/public/yql?q=select+*+from+yahoo.finance.xchange+where+pair+=+%22EURUSD,GBPUSD,USDJPY%22&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys&cb=';
+	
+	var processFloat = createFloatNumberProcessor(4);
 
-    request(apiUri, function (error, response, body){
-        if (!error && response.statusCode == 200) {
-            var jsonResult = JSON.parse(body);
-            datafeed.EURUSD = processFloat(jsonResult.query.results.rate[0].Rate);
-            datafeed.GBPUSD = processFloat(jsonResult.query.results.rate[1].Rate);
-            datafeed.USDJPY = processFloat(jsonResult.query.results.rate[2].Rate);
-         }
-        cb(error);
-    });
+	request(apiUri, function (error, response, body){
+		if (!error && response.statusCode == 200) {
+			var jsonResult = JSON.parse(body);
+			datafeed.EURUSD = processFloat(jsonResult.query.results.rate[0].Rate);
+			datafeed.GBPUSD = processFloat(jsonResult.query.results.rate[1].Rate);
+			datafeed.USDJPY = processFloat(jsonResult.query.results.rate[2].Rate);
+		}
+		cb(error);
+	});
 }
 
 function getBTCEData(datafeed, cb){
-    var apiUri = 'https://btc-e.com/api/3/ticker/btc_usd-eth_btc-eth_usd';
-    
-    var processFloat = createFloatNumberProcessor(6);
-    
-    request(apiUri, function (error, response, body){
-        if (!error && response.statusCode == 200) {
-            var jsonResult = JSON.parse(body);
-            datafeed.BTCUSD = processFloat(jsonResult.btc_usd.last);
-            datafeed.BTCUSD_AVG = processFloat(jsonResult.btc_usd.avg);
-            datafeed.ETHBTC = processFloat(jsonResult.eth_btc.last);
-            datafeed.ETHBTC_AVG = processFloat(jsonResult.eth_btc.avg);
-            datafeed.ETHUSD = processFloat(jsonResult.eth_usd.last);
-            datafeed.ETHUSD_AVG = processFloat(jsonResult.eth_usd.avg);
-         }
-        cb(error);
-    });
+	var apiUri = 'https://btc-e.com/api/3/ticker/btc_usd-eth_btc-eth_usd';
+	
+	var processFloat = createFloatNumberProcessor(6);
+	
+	request(apiUri, function (error, response, body){
+		if (!error && response.statusCode == 200) {
+			var jsonResult = JSON.parse(body);
+			datafeed.BTCUSD = processFloat(jsonResult.btc_usd.last);
+			datafeed.BTCUSD_AVG = processFloat(jsonResult.btc_usd.avg);
+			datafeed.ETHBTC = processFloat(jsonResult.eth_btc.last);
+			datafeed.ETHBTC_AVG = processFloat(jsonResult.eth_btc.avg);
+			datafeed.ETHUSD = processFloat(jsonResult.eth_usd.last);
+			datafeed.ETHUSD_AVG = processFloat(jsonResult.eth_usd.avg);
+		}
+		cb(error);
+	});
 }
 
 eventBus.on('headless_wallet_ready', initJob);
