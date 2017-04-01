@@ -3,7 +3,6 @@
 process.mainModule = module
 var headlessWallet = require('headless-byteball');
 var conf = require('byteballcore/conf.js');
-var composer;
 var db = require('byteballcore/db.js');
 var eventBus = require('byteballcore/event_bus.js');
 var objectHash = require('byteballcore/object_hash.js');
@@ -12,7 +11,8 @@ var async = require('async');
 var notifications = require('./notifications.js');
 
 var dataFeedAddress;
-var maxDataFeedComission = 0;
+var maxDataFeedComission = 700;
+var count_postings_available = 0;
 
 headlessWallet.setupChatEventHandlers();
 
@@ -25,6 +25,7 @@ function createFloatNumberProcessor(decimalPointPrecision){
 }
 
 function composeDataFeedAndPaymentJoint(from_address, payload, outputs, signer, callbacks){
+	var composer = require('byteballcore/composer.js');
 	var objMessage = {
 		app: "data_feed",
 		payload_location: "inline",
@@ -40,22 +41,43 @@ function composeDataFeedAndPaymentJoint(from_address, payload, outputs, signer, 
 	});
 }
 
-function readNumberOfDataFeedingsAvailable(handleNumber){
+function readNumberOfPostingsAvailable(handleNumber){
+	count_postings_available--;
+	if (count_postings_available > conf.MIN_AVAILABLE_POSTINGS)
+		return handleNumber(count_postings_available);
 	db.query(
 		"SELECT COUNT(*) AS count_big_outputs FROM outputs JOIN units USING(unit) \n\
 		WHERE address=? AND is_stable=1 AND amount>=? AND asset IS NULL AND is_spent=0", 
-		[dataFeedAddress, maxDataFeedComission], 
+		[my_address, maxDataFeedComission], 
 		function(rows){
-			handleNumber(rows[0].count_big_outputs);
+			var count_big_outputs = rows[0].count_big_outputs;
+			db.query(
+				"SELECT SUM(amount) AS total FROM outputs JOIN units USING(unit) \n\
+				WHERE address=? AND is_stable=1 AND amount<? AND asset IS NULL AND is_spent=0 \n\
+				UNION \n\
+				SELECT SUM(amount) AS total FROM witnessing_outputs \n\
+				WHERE address=? AND is_spent=0 \n\
+				UNION \n\
+				SELECT SUM(amount) AS total FROM headers_commission_outputs \n\
+				WHERE address=? AND is_spent=0", 
+				[my_address, maxDataFeedComission, my_address, my_address], 
+				function(rows){
+					var total = rows.reduce(function(prev, row){ return (prev + row.total); }, 0);
+					var count_postings_paid_by_small_outputs_and_commissions = Math.round(total / maxDataFeedComission);
+					count_postings_available = count_big_outputs + count_postings_paid_by_small_outputs_and_commissions;
+					handleNumber(count_postings_available);
+				}
+			);
 		}
 	);
 }
 
+
 // make sure we never run out of spendable (stable) outputs. Keep the number above a threshold, and if it drops below, produce more outputs than consume.
 function createOptimalOutputs(handleOutputs){
 	var arrOutputs = [{amount: 0, address: dataFeedAddress}];
-	readNumberOfDataFeedingsAvailable(function(count){
-		if (count >= conf.minAvailableDataFeedings)
+	readNumberOfPostingsAvailable(function(count){
+		if (count >= conf.MIN_AVAILABLE_POSTINGS)
 			return handleOutputs(arrOutputs);
 		// try to split the biggest output in two
 		db.query(
@@ -79,7 +101,7 @@ function createOptimalOutputs(handleOutputs){
 
 function initJob(){
 	var network = require('byteballcore/network.js');
-	composer = require('byteballcore/composer.js');
+	var composer = require('byteballcore/composer.js');
 	
 	if (conf.bSingleAddress)
 		headlessWallet.readSingleAddress(initAddressAndRun);
@@ -98,7 +120,7 @@ function initJob(){
 		async.series([
 			function(cb){
 				db.query(
-					"select * from outputs where address=? and is_spent=0", 
+					"SELECT * FROM outputs WHERE address=? AND is_spent=0 AND asset IS NULL", 
 					[dataFeedAddress],
 					function(rows){
 						if (rows.length > 0)
