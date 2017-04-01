@@ -133,7 +133,8 @@ function initJob(){
 				var datafeed={};
 				async.parallel([
 					function(cb){ getYahooData(datafeed, cb) },
-					function(cb){ getBTCEData(datafeed, cb) }
+					function(cb){ getCoinMarketCapData(datafeed, cb) }
+				//	function(cb){ getBTCEData(datafeed, cb) }
 				], function(){
 					if (Object.keys(datafeed).length === 0) // all data sources failed, nothing to post
 						return cb();
@@ -167,11 +168,8 @@ function initJob(){
 }
 
 function getYahooData(datafeed, cb){
-	
 	var apiUri = 'https://query.yahooapis.com/v1/public/yql?q=select+*+from+yahoo.finance.xchange+where+pair+=+%22EURUSD,GBPUSD,USDJPY%22&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys&cb=';
-	
 	var processFloat = createFloatNumberProcessor(4);
-
 	request(apiUri, function (error, response, body){
 		if (!error && response.statusCode == 200) {
 			var jsonResult = JSON.parse(body);
@@ -187,9 +185,7 @@ function getYahooData(datafeed, cb){
 
 function getBTCEData(datafeed, cb){
 	var apiUri = 'https://btc-e.com/api/3/ticker/btc_usd-eth_btc-eth_usd';
-	
 	var processFloat = createFloatNumberProcessor(6);
-	
 	request(apiUri, function (error, response, body){
 		if (!error && response.statusCode == 200) {
 			var jsonResult = JSON.parse(body);
@@ -202,6 +198,23 @@ function getBTCEData(datafeed, cb){
 		}
 		else
 			notifications.notifyAdminAboutPostingProblem("getting btc-e data failed: "+error+", status="+response.statusCode);
+		cb();
+	});
+}
+
+function getCoinMarketCapData(datafeed, cb){
+	var apiUri = 'https://api.coinmarketcap.com/v1/ticker/?limit=100';
+	request(apiUri, function (error, response, body){
+		if (!error && response.statusCode == 200) {
+			let arrCoins = JSON.parse(body);
+			arrCoins.forEach(coin => {
+				datafeed[coin.symbol+'_USD'] = coin.price_usd;
+				if (coin.symbol !== 'BTC')
+					datafeed[coin.symbol+'_BTC'] = coin.price_btc;
+			});
+		}
+		else
+			notifications.notifyAdminAboutPostingProblem("getting coinmarketcap data failed: "+error+", status="+response.statusCode);
 		cb();
 	});
 }
