@@ -19,6 +19,7 @@ exports.payout_address = 'WHERE THE MONEY CAN BE SENT TO';
 exports.bSingleAddress = true;
 exports.dataFeedAddress = "";
 exports.minAvailableDataFeedings = 100;
+exports.bWantNewPeers = false;
 
 exports.KEYS_FILENAME = 'keys.json';
 
