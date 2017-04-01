@@ -122,7 +122,7 @@ function initJob(){
 		async.series([
 			function(cb){
 				db.query(
-					"SELECT * FROM outputs WHERE address=? AND is_spent=0 AND asset IS NULL", 
+					"SELECT 1 FROM outputs WHERE address=? AND is_spent=0 AND asset IS NULL LIMIT 1", 
 					[dataFeedAddress],
 					function(rows){
 						if (rows.length > 0)
