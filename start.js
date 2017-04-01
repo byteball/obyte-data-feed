@@ -10,6 +10,8 @@ var request = require('request');
 var async = require('async');
 var notifications = require('./notifications.js');
 
+const POSTING_PERIOD = 600*1000;
+
 var dataFeedAddress;
 var maxDataFeedComission = 700;
 var count_postings_available = 0;
@@ -110,9 +112,9 @@ function initJob(){
 		
 	function initAddressAndRun(address){
 		dataFeedAddress = address;
-		console.log("DataFeed address:"+dataFeedAddress);
+		console.log("DataFeed address: "+dataFeedAddress);
 		runJob();
-		setInterval(runJob,300000);
+		setInterval(runJob, POSTING_PERIOD);
 	}
 		
 	function runJob(){
