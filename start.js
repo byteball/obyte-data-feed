@@ -6,6 +6,7 @@ var conf = require('byteballcore/conf.js');
 var db = require('byteballcore/db.js');
 var eventBus = require('byteballcore/event_bus.js');
 var objectHash = require('byteballcore/object_hash.js');
+var desktopApp = require('byteballcore/desktop_app.js');
 var request = require('request');
 var async = require('async');
 var notifications = require('./notifications.js');
@@ -104,6 +105,11 @@ function createOptimalOutputs(handleOutputs){
 function initJob(){
 	var network = require('byteballcore/network.js');
 	var composer = require('byteballcore/composer.js');
+	
+	if (!conf.admin_email || !conf.from_email){
+		console.log("please specify admin_email and from_email in your "+desktopApp.getAppDataDir()+'/conf.json');
+		process.exit(1);
+	}
 	
 	if (conf.bSingleAddress)
 		headlessWallet.readSingleAddress(initAddressAndRun);
