@@ -51,7 +51,7 @@ function readNumberOfPostingsAvailable(handleNumber){
 	db.query(
 		"SELECT COUNT(*) AS count_big_outputs FROM outputs JOIN units USING(unit) \n\
 		WHERE address=? AND is_stable=1 AND amount>=? AND asset IS NULL AND is_spent=0", 
-		[my_address, maxDataFeedComission], 
+		[dataFeedAddress, maxDataFeedComission], 
 		function(rows){
 			var count_big_outputs = rows[0].count_big_outputs;
 			db.query(
@@ -63,7 +63,7 @@ function readNumberOfPostingsAvailable(handleNumber){
 				UNION \n\
 				SELECT SUM(amount) AS total FROM headers_commission_outputs \n\
 				WHERE address=? AND is_spent=0", 
-				[my_address, maxDataFeedComission, my_address, my_address], 
+				[dataFeedAddress, maxDataFeedComission, dataFeedAddress, dataFeedAddress], 
 				function(rows){
 					var total = rows.reduce(function(prev, row){ return (prev + row.total); }, 0);
 					var count_postings_paid_by_small_outputs_and_commissions = Math.round(total / maxDataFeedComission);
@@ -177,13 +177,13 @@ function initJob(){
 
 function getYahooData(datafeed, cb){
 	var apiUri = 'https://query.yahooapis.com/v1/public/yql?q=select+*+from+yahoo.finance.xchange+where+pair+=+%22EURUSD,GBPUSD,USDJPY%22&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys&cb=';
-	var processFloat = createFloatNumberProcessor(4);
+//	var processFloat = createFloatNumberProcessor(4);
 	request(apiUri, function (error, response, body){
 		if (!error && response.statusCode == 200) {
 			var jsonResult = JSON.parse(body);
-			datafeed.EUR_USD = processFloat(jsonResult.query.results.rate[0].Rate);
-			datafeed.GBP_USD = processFloat(jsonResult.query.results.rate[1].Rate);
-			datafeed.USD_JPY = processFloat(jsonResult.query.results.rate[2].Rate);
+			datafeed.EUR_USD = jsonResult.query.results.rate[0].Rate;
+			datafeed.GBP_USD = jsonResult.query.results.rate[1].Rate;
+			datafeed.USD_JPY = jsonResult.query.results.rate[2].Rate;
 		}
 		else
 			notifications.notifyAdminAboutPostingProblem("getting btc-e data failed: "+error+", status="+response.statusCode);
@@ -193,16 +193,19 @@ function getYahooData(datafeed, cb){
 
 function getBTCEData(datafeed, cb){
 	var apiUri = 'https://btc-e.com/api/3/ticker/btc_usd-eth_btc-eth_usd';
-	var processFloat = createFloatNumberProcessor(6);
+//	var processFloat = createFloatNumberProcessor(6);
 	request(apiUri, function (error, response, body){
 		if (!error && response.statusCode == 200) {
 			var jsonResult = JSON.parse(body);
-			datafeed.BTCE_BTC_USD = processFloat(jsonResult.btc_usd.last);
-			datafeed.BTCE_BTC_USD_AVG = processFloat(jsonResult.btc_usd.avg);
-			datafeed.BTCE_ETH_BTC = processFloat(jsonResult.eth_btc.last);
-			datafeed.BTCE_ETH_BTC_AVG = processFloat(jsonResult.eth_btc.avg);
-			datafeed.BTCE_ETH_USD = processFloat(jsonResult.eth_usd.last);
-			datafeed.BTCE_ETH_USD_AVG = processFloat(jsonResult.eth_usd.avg);
+			datafeed.BTCE_BTC_USD = jsonResult.btc_usd.last;
+			datafeed.BTCE_BTC_USD_AVG = jsonResult.btc_usd.avg;
+			datafeed.BTCE_ETH_BTC = jsonResult.eth_btc.last;
+			datafeed.BTCE_ETH_BTC_AVG = jsonResult.eth_btc.avg;
+			datafeed.BTCE_ETH_USD = jsonResult.eth_usd.last;
+			datafeed.BTCE_ETH_USD_AVG = jsonResult.eth_usd.avg;
+			
+			// post the price as integer
+		//	datafeed.BTCE_ETH_USD_AVG = processFloat(jsonResult.eth_usd.avg);
 		}
 		else
 			notifications.notifyAdminAboutPostingProblem("getting btc-e data failed: "+error+", status="+response.statusCode);
