@@ -112,9 +112,9 @@ function initJob(){
 				async.parallel([
 					function(cb){ getYahooData(datafeed, cb) },
 					function(cb){ getBTCEData(datafeed, cb) }
-				], function(err){
-					if (err)
-						return cb(err);
+				], function(){
+					if (Object.keys(datafeed).length === 0) // all data sources failed, nothing to post
+						return cb();
 					var cbs = composer.getSavingCallbacks({
 						ifNotEnoughFunds: function(err){ 
 							notifications.notifyAdminAboutPostingProblem(err);
@@ -123,7 +123,8 @@ function initJob(){
 						ifError: cb,
 						ifOk: function(objJoint){
 							var feedComission = objJoint.unit.headers_commission + objJoint.unit.payload_commission; 
-							if(maxDataFeedComission < feedComission) maxDataFeedComission = feedComission;
+							if(maxDataFeedComission < feedComission)
+								maxDataFeedComission = feedComission;
 							// console.log("DataFeed:"+JSON.stringify(objJoint));
 							network.broadcastJoint(objJoint);
 							cb();
@@ -156,7 +157,9 @@ function getYahooData(datafeed, cb){
 			datafeed.GBPUSD = processFloat(jsonResult.query.results.rate[1].Rate);
 			datafeed.USDJPY = processFloat(jsonResult.query.results.rate[2].Rate);
 		}
-		cb(error);
+		else
+			notifications.notifyAdminAboutPostingProblem("getting btc-e data failed: "+error+", status="+response.statusCode);
+		cb();
 	});
 }
 
@@ -175,7 +178,9 @@ function getBTCEData(datafeed, cb){
 			datafeed.ETHUSD = processFloat(jsonResult.eth_usd.last);
 			datafeed.ETHUSD_AVG = processFloat(jsonResult.eth_usd.avg);
 		}
-		cb(error);
+		else
+			notifications.notifyAdminAboutPostingProblem("getting btc-e data failed: "+error+", status="+response.statusCode);
+		cb();
 	});
 }
 
