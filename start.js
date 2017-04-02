@@ -1,6 +1,5 @@
 /*jslint node: true */
 "use strict";
-process.mainModule = module
 var headlessWallet = require('headless-byteball');
 var conf = require('byteballcore/conf.js');
 var db = require('byteballcore/db.js');

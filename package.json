@@ -25,7 +25,7 @@
   },
   "dependencies": {
     "async": "^1.5.2",
-    "byteballcore": "^0.2.0",
+    "byteballcore": "^0.2.6",
     "headless-byteball": "git+https://github.com/byteball/headless-byteball.git",
     "request": "^2.79.0"
   }
