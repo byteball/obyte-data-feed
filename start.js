@@ -155,7 +155,8 @@ function initJob(){
 				var datafeed={};
 				async.parallel([
 					function(cb){ getYahooData(datafeed, cb) },
-					function(cb){ getCoinMarketCapData(datafeed, cb) }
+					function(cb){ getCryptoCoinData(datafeed, cb) }
+				//	function(cb){ getCoinMarketCapData(datafeed, cb) }
 				//	function(cb){ getBTCEData(datafeed, cb) }
 				], function(){
 					if (Object.keys(datafeed).length === 0) // all data sources failed, nothing to post
@@ -246,5 +247,123 @@ function getCoinMarketCapData(datafeed, cb){
 		cb();
 	});
 }
+
+function getPriceInUsd(price, strBtcPrice){
+	var price_in_usd = (price * strBtcPrice).toFixed(8);
+	let arr = price_in_usd.split('.');
+	let int = arr[0];
+	let frac = arr[1];
+	if (int > 0 || frac[0] !== '0')
+		price_in_usd = parseFloat(price_in_usd).toFixed(6-int.length);
+	else if (frac[1] !== '0')
+		price_in_usd = parseFloat(price_in_usd).toFixed(6);
+	else if (frac[2] !== '0')
+		price_in_usd = parseFloat(price_in_usd).toFixed(7);
+	return price_in_usd;
+}
+
+function mergeAssoc(dest, src){
+	for (var key in src)
+		if (!dest[key])
+			dest[key] = src[key];
+}
+
+function getCryptoCoinData(datafeed, cb){
+	getBitfinexBtcPrice(function(err, strBtcPrice){
+		if (err)
+			return cb();
+		datafeed['BTC_USD'] = strBtcPrice;
+		getPoloniexData(strBtcPrice, function(err, poloData){
+			if (err)
+				return cb();
+			mergeAssoc(datafeed, poloData);
+			getBittrexData(strBtcPrice, function(err, bittrexData){
+				if (err)
+					return cb();
+				mergeAssoc(datafeed, bittrexData);
+				cb();
+			});
+		});
+	});
+}
+
+function getBitfinexBtcPrice(cb){
+	function onError(err){
+		notifications.notifyAdminAboutPostingProblem(err);
+		cb(err);
+	}
+	var apiUri = 'https://api.bitfinex.com/v1/pubticker/btcusd';
+	request(apiUri, function (error, response, body){
+		if (!error && response.statusCode == 200) {
+			let info = JSON.parse(body);
+			let strBtcPrice = info.last_price;
+			if (!strBtcPrice)
+				return onError("invalid bitfinex response: "+body);
+			cb(null, strBtcPrice);
+		}
+		else
+			onError("getting bitfinex data failed: "+error+", status="+response.statusCode);
+	});
+}
+
+function getPoloniexData(strBtcPrice, cb){
+	function onError(err){
+		notifications.notifyAdminAboutPostingProblem(err);
+		cb(err);
+	}
+	var datafeed = {};
+	const apiUri = 'https://poloniex.com/public?command=returnTicker';
+	request(apiUri, function (error, response, body){
+		if (!error && response.statusCode == 200) {
+			let assocPairs = JSON.parse(body);
+			for (var pair in assocPairs){
+				let price = assocPairs[pair].last; // string
+				if (!price)
+					return onError("bad polo price of "+pair);
+				let arrParts = pair.split('_');
+				let market = arrParts[0];
+				let coin = arrParts[1];
+				if (market !== 'BTC')
+					continue;
+				datafeed[coin+'_BTC'] = price;
+				datafeed[coin+'_USD'] = getPriceInUsd(price, strBtcPrice);
+			}
+			cb(null, datafeed);
+		}
+		else
+			onError("getting poloniex data failed: "+error+", status="+response.statusCode);
+	});
+}
+
+function getBittrexData(strBtcPrice, cb){
+	function onError(err){
+		notifications.notifyAdminAboutPostingProblem(err);
+		cb(err);
+	}
+	var datafeed = {};
+	const apiUri = 'https://bittrex.com/api/v1.1/public/getmarketsummaries';
+	request(apiUri, function (error, response, body){
+		if (!error && response.statusCode == 200) {
+			let arrCoinInfos = JSON.parse(body).result;
+			arrCoinInfos.forEach(coinInfo => {
+				let price = coinInfo.Last; // number
+				let arrParts = coinInfo.MarketName.split('-');
+				let market = arrParts[0];
+				let coin = arrParts[1];
+				if (market !== 'BTC')
+					return;
+				datafeed[coin+'_BTC'] = price.toFixed(8);
+				datafeed[coin+'_USD'] = getPriceInUsd(price, strBtcPrice);
+			});
+			cb(null, datafeed);
+		}
+		else
+			onError("getting poloniex data failed: "+error+", status="+response.statusCode);
+	});
+}
+
+
+
+//getCryptoCoinData({}, function(){});
 
 eventBus.on('headless_wallet_ready', initJob);
