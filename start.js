@@ -347,6 +347,8 @@ function getBittrexData(strBtcPrice, cb){
 			let arrCoinInfos = JSON.parse(body).result;
 			arrCoinInfos.forEach(coinInfo => {
 				let price = coinInfo.Last; // number
+				if (!price)
+					return;
 				let arrParts = coinInfo.MarketName.split('-');
 				let market = arrParts[0];
 				let coin = arrParts[1];
