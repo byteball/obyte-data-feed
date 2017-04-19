@@ -199,12 +199,16 @@ function getYahooData(datafeed, cb){
 	request(apiUri, function (error, response, body){
 		if (!error && response.statusCode == 200) {
 			var jsonResult = JSON.parse(body);
-			datafeed.EUR_USD = jsonResult.query.results.rate[0].Rate;
-			datafeed.GBP_USD = jsonResult.query.results.rate[1].Rate;
-			datafeed.USD_JPY = jsonResult.query.results.rate[2].Rate;
+			if (jsonResult.query && jsonResult.query.results && jsonResult.query.results.rate){
+				datafeed.EUR_USD = jsonResult.query.results.rate[0].Rate;
+				datafeed.GBP_USD = jsonResult.query.results.rate[1].Rate;
+				datafeed.USD_JPY = jsonResult.query.results.rate[2].Rate;
+			}
+			else
+				notifications.notifyAdminAboutPostingProblem("bad response from yahoo: "+body);
 		}
 		else
-			notifications.notifyAdminAboutPostingProblem("getting btc-e data failed: "+error+", status="+response.statusCode);
+			notifications.notifyAdminAboutPostingProblem("getting yahoo data failed: "+error+", status="+response.statusCode);
 		cb();
 	});
 }
