@@ -208,7 +208,7 @@ function getYahooData(datafeed, cb){
 				notifications.notifyAdminAboutPostingProblem("bad response from yahoo: "+body);
 		}
 		else
-			notifications.notifyAdminAboutPostingProblem("getting yahoo data failed: "+error+", status="+response.statusCode);
+			notifications.notifyAdminAboutPostingProblem("getting yahoo data failed: "+error+", status="+(response ? response.statusCode : '?'));
 		cb();
 	});
 }
@@ -230,7 +230,7 @@ function getBTCEData(datafeed, cb){
 		//	datafeed.BTCE_ETH_USD_AVG = processFloat(jsonResult.eth_usd.avg);
 		}
 		else
-			notifications.notifyAdminAboutPostingProblem("getting btc-e data failed: "+error+", status="+response.statusCode);
+			notifications.notifyAdminAboutPostingProblem("getting btc-e data failed: "+error+", status="+(response ? response.statusCode : '?'));
 		cb();
 	});
 }
@@ -247,7 +247,7 @@ function getCoinMarketCapData(datafeed, cb){
 			});
 		}
 		else
-			notifications.notifyAdminAboutPostingProblem("getting coinmarketcap data failed: "+error+", status="+response.statusCode);
+			notifications.notifyAdminAboutPostingProblem("getting coinmarketcap data failed: "+error+", status="+(response ? response.statusCode : '?'));
 		cb();
 	});
 }
@@ -306,7 +306,7 @@ function getBitfinexBtcPrice(cb){
 			cb(null, strBtcPrice);
 		}
 		else
-			onError("getting bitfinex data failed: "+error+", status="+response.statusCode);
+			onError("getting bitfinex data failed: "+error+", status="+(response ? response.statusCode : '?'));
 	});
 }
 
@@ -335,7 +335,7 @@ function getPoloniexData(strBtcPrice, cb){
 			cb(null, datafeed);
 		}
 		else
-			onError("getting poloniex data failed: "+error+", status="+response.statusCode);
+			onError("getting poloniex data failed: "+error+", status="+(response ? response.statusCode : '?'));
 	});
 }
 
@@ -364,7 +364,7 @@ function getBittrexData(strBtcPrice, cb){
 			cb(null, datafeed);
 		}
 		else
-			onError("getting poloniex data failed: "+error+", status="+response.statusCode);
+			onError("getting poloniex data failed: "+error+", status="+(response ? response.statusCode : '?'));
 	});
 }
 
