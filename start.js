@@ -364,7 +364,7 @@ function getBittrexData(strBtcPrice, cb){
 			cb(null, datafeed);
 		}
 		else
-			onError("getting poloniex data failed: "+error+", status="+(response ? response.statusCode : '?'));
+			onError("getting bittrex data failed: "+error+", status="+(response ? response.statusCode : '?'));
 	});
 }
 
