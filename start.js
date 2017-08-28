@@ -157,7 +157,6 @@ function initJob(){
 					function(cb){ getYahooData(datafeed, cb) },
 					function(cb){ getCryptoCoinData(datafeed, cb) }
 				//	function(cb){ getCoinMarketCapData(datafeed, cb) }
-				//	function(cb){ getBTCEData(datafeed, cb) }
 				], function(){
 					if (Object.keys(datafeed).length === 0) // all data sources failed, nothing to post
 						return cb();
@@ -213,27 +212,6 @@ function getYahooData(datafeed, cb){
 	});
 }
 
-function getBTCEData(datafeed, cb){
-	var apiUri = 'https://btc-e.com/api/3/ticker/btc_usd-eth_btc-eth_usd';
-//	var processFloat = createFloatNumberProcessor(6);
-	request(apiUri, function (error, response, body){
-		if (!error && response.statusCode == 200) {
-			var jsonResult = JSON.parse(body);
-			datafeed.BTCE_BTC_USD = jsonResult.btc_usd.last;
-			datafeed.BTCE_BTC_USD_AVG = jsonResult.btc_usd.avg;
-			datafeed.BTCE_ETH_BTC = jsonResult.eth_btc.last;
-			datafeed.BTCE_ETH_BTC_AVG = jsonResult.eth_btc.avg;
-			datafeed.BTCE_ETH_USD = jsonResult.eth_usd.last;
-			datafeed.BTCE_ETH_USD_AVG = jsonResult.eth_usd.avg;
-			
-			// post the price as integer
-		//	datafeed.BTCE_ETH_USD_AVG = processFloat(jsonResult.eth_usd.avg);
-		}
-		else
-			notifications.notifyAdminAboutPostingProblem("getting btc-e data failed: "+error+", status="+(response ? response.statusCode : '?'));
-		cb();
-	});
-}
 
 function getCoinMarketCapData(datafeed, cb){
 	var apiUri = 'https://api.coinmarketcap.com/v1/ticker/?limit=100';
