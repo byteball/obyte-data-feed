@@ -219,7 +219,7 @@ function getCoinMarketCapGlobalData(datafeed, cb){
 	request(apiUri, function (error, response, body){
 		if (!error && response.statusCode == 200) {
 			let global_data = JSON.parse(body);
-			datafeed['TOTAL_CAP_USD'] = (global_data.total_market_cap_usd/1e9).toFixed(3);
+			datafeed['TOTAL_CAP'] = (global_data.total_market_cap_usd/1e9).toFixed(3);
 			datafeed['BTC_PERCENTAGE'] = global_data.bitcoin_percentage_of_market_cap.toString();
 		}
 		else
