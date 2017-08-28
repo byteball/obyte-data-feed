@@ -155,7 +155,8 @@ function initJob(){
 				var datafeed={};
 				async.parallel([
 					function(cb){ getYahooData(datafeed, cb) },
-					function(cb){ getCryptoCoinData(datafeed, cb) }
+					function(cb){ getCryptoCoinData(datafeed, cb) },
+					function(cb){ getCoinMarketCapGlobalData(datafeed, cb) }
 				//	function(cb){ getCoinMarketCapData(datafeed, cb) }
 				], function(){
 					if (Object.keys(datafeed).length === 0) // all data sources failed, nothing to post
@@ -212,6 +213,20 @@ function getYahooData(datafeed, cb){
 	});
 }
 
+
+function getCoinMarketCapGlobalData(datafeed, cb){
+	var apiUri = 'https://api.coinmarketcap.com/v1/global/';
+	request(apiUri, function (error, response, body){
+		if (!error && response.statusCode == 200) {
+			let global_data = JSON.parse(body);
+			datafeed['TOTAL_CAP_USD'] = (global_data.total_market_cap_usd/1e9).toFixed(3);
+			datafeed['BTC_PERCENTAGE'] = global_data.bitcoin_percentage_of_market_cap.toString();
+		}
+		else
+			notifications.notifyAdminAboutPostingProblem("getting coinmarketcap global data failed: "+error+", status="+(response ? response.statusCode : '?'));
+		cb();
+	});
+}
 
 function getCoinMarketCapData(datafeed, cb){
 	var apiUri = 'https://api.coinmarketcap.com/v1/ticker/?limit=100';
