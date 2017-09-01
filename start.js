@@ -154,7 +154,7 @@ function initJob(){
 			function(cb){
 				var datafeed={};
 				async.parallel([
-					function(cb){ getYahooData(datafeed, cb) },
+					function(cb){ getYahooDataWithRetries(datafeed, cb) },
 					function(cb){ getCryptoCoinData(datafeed, cb) },
 					function(cb){ getCoinMarketCapGlobalData(datafeed, cb) }
 				//	function(cb){ getCoinMarketCapData(datafeed, cb) }
@@ -203,16 +203,30 @@ function getYahooData(datafeed, cb){
 				datafeed.EUR_USD = jsonResult.query.results.rate[0].Rate;
 				datafeed.GBP_USD = jsonResult.query.results.rate[1].Rate;
 				datafeed.USD_JPY = jsonResult.query.results.rate[2].Rate;
+				cb();
 			}
 			else
-				notifications.notifyAdminAboutPostingProblem("bad response from yahoo: "+body);
+				cb("bad response from yahoo: "+body);
 		}
 		else
-			notifications.notifyAdminAboutPostingProblem("getting yahoo data failed: "+error+", status="+(response ? response.statusCode : '?'));
-		cb();
+			cb("getting yahoo data failed: "+error+", status="+(response ? response.statusCode : '?'));
 	});
 }
 
+function getYahooDataWithRetries(datafeed, cb){
+	let count_tries = 0;
+	function tryToGetData(){
+		getYahooData(datafeed, function(err){
+			count_tries++;
+			if (err && count_tries < 10)
+				return tryToGetData();
+			if (err)
+				notifications.notifyAdminAboutPostingProblem(err);
+			cb();
+		});
+	}
+	tryToGetData();
+}
 
 function getCoinMarketCapGlobalData(datafeed, cb){
 	var apiUri = 'https://api.coinmarketcap.com/v1/global/';
