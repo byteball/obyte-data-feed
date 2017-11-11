@@ -154,7 +154,7 @@ function initJob(){
 			function(cb){
 				var datafeed={};
 				async.parallel([
-					function(cb){ getYahooDataWithRetries(datafeed, cb) },
+				//	function(cb){ getYahooDataWithRetries(datafeed, cb) }, // shut down in nov 2017
 					function(cb){ getCryptoCoinData(datafeed, cb) },
 					function(cb){ getCoinMarketCapGlobalData(datafeed, cb) }
 				//	function(cb){ getCoinMarketCapData(datafeed, cb) }
