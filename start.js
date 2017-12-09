@@ -306,6 +306,7 @@ function getBitfinexBtcPrice(cb){
 	var apiUri = 'https://api.bitfinex.com/v1/pubticker/btcusd';
 	request(apiUri, function (error, response, body){
 		if (!error && response.statusCode == 200) {
+			console.log("bitfinex response: "+body);
 			let info = JSON.parse(body);
 			let strBtcPrice = info.last_price;
 			if (!strBtcPrice)
