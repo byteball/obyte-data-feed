@@ -1,23 +1,26 @@
 {
-  "name": "byteball-data-feed",
-  "description": "Byteball data feeder",
+  "name": "obyte-data-feed",
+  "description": "Obyte price oracle",
   "author": "DevAlexey",
   "version": "0.1.0",
   "main": "start.js",
   "keywords": [
     "wallet",
     "headless",
+    "obyte",
+    "oracle",
+    "DAG",
     "byteball",
     "full node",
     "data feed"
   ],
   "license": "MIT",
   "repository": {
-    "url": "git://github.com/byteball/byteball-data-feed.git",
+    "url": "git://github.com/byteball/obyte-data-feed.git",
     "type": "git"
   },
   "bugs": {
-    "url": "https://github.com/byteball/byteball-data-feed/issues"
+    "url": "https://github.com/byteball/obyte-data-feed/issues"
   },
   "browser": {
     "request": "browser-request",
@@ -25,8 +28,8 @@
   },
   "dependencies": {
     "async": "^1.5.2",
-    "byteballcore": "git+https://github.com/byteball/byteballcore.git",
-    "headless-byteball": "git+https://github.com/byteball/headless-byteball.git",
+    "ocore": "git+https://github.com/byteball/ocore.git",
+    "headless-obyte": "git+https://github.com/byteball/headless-obyte.git",
     "request": "^2.79.0"
   }
 }

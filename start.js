@@ -1,11 +1,19 @@
 /*jslint node: true */
 "use strict";
-var headlessWallet = require('headless-byteball');
-var conf = require('byteballcore/conf.js');
-var db = require('byteballcore/db.js');
-var eventBus = require('byteballcore/event_bus.js');
-var objectHash = require('byteballcore/object_hash.js');
-var desktopApp = require('byteballcore/desktop_app.js');
+var fs = require('fs');
+var desktopApp = require('ocore/desktop_app.js');
+var appDataDir = desktopApp.getAppDataDir();
+var path = require('path');
+
+if (require.main === module && !fs.existsSync(appDataDir) && fs.existsSync(path.dirname(appDataDir)+'/byteball-data-feed')){
+	console.log('=== will rename old data-feed data dir');
+	fs.renameSync(path.dirname(appDataDir)+'/byteball-data-feed', appDataDir);
+}
+var headlessWallet = require('headless-obyte');
+var conf = require('ocore/conf.js');
+var db = require('ocore/db.js');
+var eventBus = require('ocore/event_bus.js');
+var objectHash = require('ocore/object_hash.js');
 var request = require('request');
 var async = require('async');
 var notifications = require('./notifications.js');
@@ -42,7 +50,7 @@ function removeUnchanged(datafeed){
 }
 
 function composeDataFeedAndPaymentJoint(from_address, payload, outputs, signer, callbacks){
-	var composer = require('byteballcore/composer.js');
+	var composer = require('ocore/composer.js');
 	var objMessage = {
 		app: "data_feed",
 		payload_location: "inline",
@@ -117,8 +125,8 @@ function createOptimalOutputs(handleOutputs){
 }
 
 function initJob(){
-	var network = require('byteballcore/network.js');
-	var composer = require('byteballcore/composer.js');
+	var network = require('ocore/network.js');
+	var composer = require('ocore/composer.js');
 	
 	if (!conf.admin_email || !conf.from_email){
 		console.log("please specify admin_email and from_email in your "+desktopApp.getAppDataDir()+'/conf.json');
