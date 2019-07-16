@@ -28,8 +28,8 @@
   },
   "dependencies": {
     "async": "^1.5.2",
-    "ocore": "git+https://github.com/byteball/ocore.git",
-    "headless-obyte": "git+https://github.com/byteball/headless-obyte.git",
+    "ocore": "git+https://github.com/byteball/ocore.git#rocks-and-formulas",
+    "headless-obyte": "git+https://github.com/byteball/headless-obyte.git#aa",
     "request": "^2.79.0"
   }
 }
