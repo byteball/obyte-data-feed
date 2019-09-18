@@ -375,6 +375,8 @@ function getBittrexData(strBtcPrice, cb){
 			catch(e){
 				return onError(e.toString());
 			}
+			if (!arrCoinInfos)
+				return onError('bad rates from bittrex');
 			arrCoinInfos.forEach(coinInfo => {
 				let price = coinInfo.Last; // number
 				if (!price)
