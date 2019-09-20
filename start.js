@@ -11,7 +11,6 @@ if (require.main === module && !fs.existsSync(appDataDir) && fs.existsSync(path.
 }
 var headlessWallet = require('headless-obyte');
 var conf = require('ocore/conf.js');
-var db = require('ocore/db.js');
 var eventBus = require('ocore/event_bus.js');
 var objectHash = require('ocore/object_hash.js');
 var request = require('request');
@@ -47,27 +46,7 @@ function removeUnchanged(datafeed){
 	return filtered_datafeed;
 }
 
-function composeDataFeedAndPaymentJoint(from_address, payload, outputs, signer, callbacks){
-	var composer = require('ocore/composer.js');
-	var objMessage = {
-		app: "data_feed",
-		payload_location: "inline",
-		payload_hash: objectHash.getBase64Hash(payload),
-		payload: payload
-	};
-	composer.composeJoint({
-		paying_addresses: [from_address], 
-		outputs: outputs, 
-		messages: [objMessage], 
-		signer: signer, 
-		callbacks: callbacks
-	});
-}
-
 function initJob(){
-	var network = require('ocore/network.js');
-	var composer = require('ocore/composer.js');
-	
 	if (!conf.admin_email || !conf.from_email){
 		console.log("please specify admin_email and from_email in your "+desktopApp.getAppDataDir()+'/conf.json');
 		process.exit(1);
@@ -87,40 +66,36 @@ function initJob(){
 		
 	function runJob(){
 		console.log("DataFeed: job started");
-		async.series([
-			function(cb){
-				var datafeed={};
-				async.parallel([
-				//	function(cb){ getYahooDataWithRetries(datafeed, cb) }, // shut down in nov 2017
-					function(cb){ getCryptoCoinData(datafeed, cb) },
-					function(cb){ getCoinMarketCapGlobalData(datafeed, cb) }
-				//	function(cb){ getCoinMarketCapData(datafeed, cb) }
-				], function(){
-					if (Object.keys(datafeed).length === 0) // all data sources failed, nothing to post
-						return cb();
-					datafeed = removeUnchanged(datafeed);
-					if (Object.keys(datafeed).length === 0) // no changes, nothing to post
-						return cb();
-					var cbs = composer.getSavingCallbacks({
-						ifNotEnoughFunds: function(err){ 
-							notifications.notifyAdminAboutPostingProblem(err);
-							cb();
-						},
-						ifError: cb,
-						ifOk: function(objJoint){
-							network.broadcastJoint(objJoint);
-							cb();
-						}
-					});
-					datafeed.timestamp = Date.now();
-					datafeed.hash = objectHash.getBase64Hash(datafeed); // this can serve as randomness seed
-					composeDataFeedAndPaymentJoint(dataFeedAddress, datafeed, [{amount: 0, address: dataFeedAddress}], headlessWallet.signer, cbs)
-				});
-			}
-		], function(err){
-			if (err)
-				return notifications.notifyAdminAboutPostingProblem(err);
-			console.log("DataFeed: published");
+		var datafeed={};
+		async.parallel([
+		//	function(cb){ getYahooDataWithRetries(datafeed, cb) }, // shut down in nov 2017
+			function(cb){ getCryptoCoinData(datafeed, cb) },
+			function(cb){ getCoinMarketCapGlobalData(datafeed, cb) }
+		//	function(cb){ getCoinMarketCapData(datafeed, cb) }
+		], function(){
+			if (Object.keys(datafeed).length === 0) // all data sources failed, nothing to post
+				return console.log('nothing to post');
+			datafeed = removeUnchanged(datafeed);
+			if (Object.keys(datafeed).length === 0) // no changes, nothing to post
+				return console.log('no changes');
+			datafeed.timestamp = Date.now();
+			datafeed.hash = objectHash.getBase64Hash(datafeed); // this can serve as randomness seed
+			var objMessage = {
+				app: "data_feed",
+				payload_location: "inline",
+				payload_hash: objectHash.getBase64Hash(datafeed),
+				payload: datafeed
+			};
+			var opts = {
+				paying_addresses: [dataFeedAddress],
+				change_address: dataFeedAddress,
+				messages: [objMessage]
+			};
+			headlessWallet.sendMultiPayment(opts, function(err, unit){
+				if (err)
+					return notifications.notifyAdminAboutPostingProblem(err);
+				console.log("DataFeed published: " + unit);
+			});
 		});
 	}
 }
