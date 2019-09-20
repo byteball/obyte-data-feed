@@ -124,6 +124,7 @@ function initJob(){
 						}
 					});
 					datafeed.timestamp = Date.now();
+					datafeed.hash = objectHash.getBase64Hash(datafeed); // this can serve as randomness seed
 					composeDataFeedAndPaymentJoint(dataFeedAddress, datafeed, [{amount: 0, address: dataFeedAddress}], headlessWallet.signer, cbs)
 				});
 			}
