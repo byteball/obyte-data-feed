@@ -89,17 +89,6 @@ function initJob(){
 		console.log("DataFeed: job started");
 		async.series([
 			function(cb){
-				db.query(
-					"SELECT 1 FROM outputs WHERE address=? AND is_spent=0 AND asset IS NULL LIMIT 1", 
-					[dataFeedAddress],
-					function(rows){
-						if (rows.length > 0)
-							return cb();
-						cb("No spendable outputs");
-					}
-				);
-			},
-			function(cb){
 				var datafeed={};
 				async.parallel([
 				//	function(cb){ getYahooDataWithRetries(datafeed, cb) }, // shut down in nov 2017
