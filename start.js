@@ -21,8 +21,6 @@ var notifications = require('./notifications.js');
 const POSTING_PERIOD = 600*1000;
 
 var dataFeedAddress;
-var maxDataFeedComission = 700;
-var count_postings_available = 0;
 var prev_datafeed;
 
 headlessWallet.setupChatEventHandlers();
@@ -63,64 +61,6 @@ function composeDataFeedAndPaymentJoint(from_address, payload, outputs, signer, 
 		messages: [objMessage], 
 		signer: signer, 
 		callbacks: callbacks
-	});
-}
-
-function readNumberOfPostingsAvailable(handleNumber){
-	count_postings_available--;
-	if (count_postings_available > conf.MIN_AVAILABLE_POSTINGS)
-		return handleNumber(count_postings_available);
-	db.query(
-		"SELECT COUNT(*) AS count_big_outputs FROM outputs JOIN units USING(unit) \n\
-		WHERE address=? AND is_stable=1 AND amount>=? AND asset IS NULL AND is_spent=0", 
-		[dataFeedAddress, maxDataFeedComission], 
-		function(rows){
-			var count_big_outputs = rows[0].count_big_outputs;
-			db.query(
-				"SELECT SUM(amount) AS total FROM outputs JOIN units USING(unit) \n\
-				WHERE address=? AND is_stable=1 AND amount<? AND asset IS NULL AND is_spent=0 \n\
-				UNION \n\
-				SELECT SUM(amount) AS total FROM witnessing_outputs \n\
-				WHERE address=? AND is_spent=0 \n\
-				UNION \n\
-				SELECT SUM(amount) AS total FROM headers_commission_outputs \n\
-				WHERE address=? AND is_spent=0", 
-				[dataFeedAddress, maxDataFeedComission, dataFeedAddress, dataFeedAddress], 
-				function(rows){
-					var total = rows.reduce(function(prev, row){ return (prev + row.total); }, 0);
-					var count_postings_paid_by_small_outputs_and_commissions = Math.round(total / maxDataFeedComission);
-					count_postings_available = count_big_outputs + count_postings_paid_by_small_outputs_and_commissions;
-					handleNumber(count_postings_available);
-				}
-			);
-		}
-	);
-}
-
-
-// make sure we never run out of spendable (stable) outputs. Keep the number above a threshold, and if it drops below, produce more outputs than consume.
-function createOptimalOutputs(handleOutputs){
-	var arrOutputs = [{amount: 0, address: dataFeedAddress}];
-	readNumberOfPostingsAvailable(function(count){
-		if (count >= conf.MIN_AVAILABLE_POSTINGS)
-			return handleOutputs(arrOutputs);
-		// try to split the biggest output in two
-		db.query(
-			"SELECT amount FROM outputs JOIN units USING(unit) \n\
-			WHERE address=? AND is_stable=1 AND amount>=? AND asset IS NULL AND is_spent=0 \n\
-			ORDER BY amount DESC LIMIT 1", 
-			[dataFeedAddress, 2*maxDataFeedComission],
-			function(rows){
-				if (rows.length === 0){
-					notifications.notifyAdminAboutPostingProblem('DataFeed WARN:only '+count+" spendable outputs left, and can't add more");
-					return handleOutputs(arrOutputs);
-				}
-				var amount = rows[0].amount;
-			//	notifications.notifyAdminAboutPostingProblem('DataFeed WARN:only '+count+" spendable outputs left, will split an output of "+amount);
-				arrOutputs.push({amount: Math.round(amount/2), address: dataFeedAddress});
-				handleOutputs(arrOutputs);
-			}
-		);
 	});
 }
 
@@ -179,18 +119,12 @@ function initJob(){
 						},
 						ifError: cb,
 						ifOk: function(objJoint){
-							var feedComission = objJoint.unit.headers_commission + objJoint.unit.payload_commission; 
-							if(maxDataFeedComission < feedComission)
-								maxDataFeedComission = feedComission;
-							// console.log("DataFeed:"+JSON.stringify(objJoint));
 							network.broadcastJoint(objJoint);
 							cb();
 						}
 					});
 					datafeed.timestamp = Date.now();
-					createOptimalOutputs(function(arrOutputs){
-						composeDataFeedAndPaymentJoint(dataFeedAddress, datafeed, arrOutputs, headlessWallet.signer, cbs)
-					});
+					composeDataFeedAndPaymentJoint(dataFeedAddress, datafeed, [{amount: 0, address: dataFeedAddress}], headlessWallet.signer, cbs)
 				});
 			}
 		], function(err){
