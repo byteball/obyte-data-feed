@@ -18,7 +18,6 @@ exports.payout_address = 'WHERE THE MONEY CAN BE SENT TO';
 //Wallet uses first address if bSingleAddress == true or you have to tell it what address to use with dataFeedAddress parameter
 exports.bSingleAddress = true;
 exports.dataFeedAddress = "";
-exports.MIN_AVAILABLE_POSTINGS = 100;
 exports.bWantNewPeers = false;
 
 exports.KEYS_FILENAME = 'keys.json';
