@@ -21,6 +21,7 @@ const POSTING_PERIOD = 600*1000;
 
 var dataFeedAddress;
 var prev_datafeed;
+var prevDatafeeds = [];
 
 headlessWallet.setupChatEventHandlers();
 
@@ -32,11 +33,85 @@ function createFloatNumberProcessor(decimalPointPrecision){
 	}
 }
 
+function getAverage(name) {
+	return prevDatafeeds.reduce((acc, df) => acc + parseFloat(df[name]), 0) / prevDatafeeds.length;
+}
+
+function getFormattedAverage(name) {
+	let avg = getAverage(name);
+	if (name.endsWith('_BTC'))
+		return avg.toFixed(8);
+	if (name.endsWith('_USD'))
+		return formatPriceInUsd(avg);
+	return avg.toFixed(8);
+}
+
+function addMAs(datafeed) {
+	if (!conf.maPairs || !conf.ma_length)
+		return console.log("skipping MA because maPairs is not defined");
+	var filtered_datafeed = {};
+	for (const name of conf.maPairs) {
+		if (!datafeed[name])
+			return console.log("skipping MA because there is no data feed for " + name);
+		filtered_datafeed[name] = datafeed[name];
+	}
+	prevDatafeeds.push(filtered_datafeed);
+	if (prevDatafeeds.length > conf.ma_length)
+		prevDatafeeds.shift(); // forget old data
+	conf.maPairs.forEach(name => {
+		if (prevDatafeeds[0][name]) // only if we have the entire row of 10 values
+			datafeed[name + '_MA'] = getFormattedAverage(name);
+	});
+}
+
+function readLastDataFeedValue(address, feed_name, max_mci, handleResult) {
+	if (!handleResult)
+		return new Promise(resolve => readLastDataFeedValue(address, feed_name, max_mci, resolve));
+	const data_feeds = require('ocore/data_feeds.js');
+	data_feeds.readDataFeedValue([address], feed_name, null, 0, max_mci, false, 'last', objResult => {
+		handleResult({ value: objResult.value, mci: objResult.mci });
+	});
+}
+
+async function getLastDataFeedValues(address, feed_name) {
+	let values = [];
+	let max_mci = 1e15;
+	for (let i = 0; i < conf.ma_length; i++){
+		let { value, mci } = await readLastDataFeedValue(address, feed_name, max_mci);
+		if (!value)
+			break;
+		if (!mci)
+			throw Error("have value " + value + " but not mci");
+		values.push(value);
+		max_mci = mci - 1;
+	}
+	return values;
+}
+
+async function initPrevDatafeeds() {
+	if (!conf.ma_length || !conf.maPairs || conf.maPairs.length === 0)
+		return;
+	let valuesByFeedname = {};
+	for (const name of conf.maPairs)
+		valuesByFeedname[name] = await getLastDataFeedValues(dataFeedAddress, name);
+	for (let i = 0; i < conf.ma_length; i++){
+		let df = {};
+		for (const name of conf.maPairs)
+			if (valuesByFeedname[name][i])
+				df[name] = valuesByFeedname[name][i];
+		if (Object.keys(df).length === 0)
+			break;
+		prevDatafeeds.push(df);
+	}
+	prevDatafeeds.reverse();
+	console.log('prev data feeds', prevDatafeeds);
+}
+
 function removeUnchanged(datafeed){
 	var filtered_datafeed = {};
 	if (prev_datafeed){
 		for (var name in datafeed){
-			if (datafeed[name] !== prev_datafeed[name])
+			if (conf.maPairs.includes(name) || datafeed[name] !== prev_datafeed[name])
 				filtered_datafeed[name] = datafeed[name];
 		}
 	}
@@ -46,23 +121,22 @@ function removeUnchanged(datafeed){
 	return filtered_datafeed;
 }
 
-function initJob(){
+async function initJob(){
 	if (!conf.admin_email || !conf.from_email){
 		console.log("please specify admin_email and from_email in your "+desktopApp.getAppDataDir()+'/conf.json');
 		process.exit(1);
 	}
 	
 	if (conf.bSingleAddress)
-		headlessWallet.readSingleAddress(initAddressAndRun);
+		dataFeedAddress = await headlessWallet.readSingleAddress();
 	else
-		initAddressAndRun(conf.dataFeedAddress);
-		
-	function initAddressAndRun(address){
-		dataFeedAddress = address;
-		console.log("DataFeed address: "+dataFeedAddress);
-		runJob();
-		setInterval(runJob, POSTING_PERIOD);
-	}
+		dataFeedAddress = conf.dataFeedAddress;
+	console.log("DataFeed address: " + dataFeedAddress);
+	
+	await initPrevDatafeeds();
+
+	runJob();
+	setInterval(runJob, POSTING_PERIOD);
 		
 	function runJob(){
 		console.log("DataFeed: job started");
@@ -76,6 +150,7 @@ function initJob(){
 			if (Object.keys(datafeed).length === 0) // all data sources failed, nothing to post
 				return console.log('nothing to post');
 			datafeed = removeUnchanged(datafeed);
+			addMAs(datafeed);
 			if (Object.keys(datafeed).length === 0) // no changes, nothing to post
 				return console.log('no changes');
 			datafeed.timestamp = Date.now();
@@ -167,7 +242,11 @@ function getCoinMarketCapData(datafeed, cb){
 }
 
 function getPriceInUsd(price, strBtcPrice){
-	var price_in_usd = (price * strBtcPrice).toFixed(8);
+	return formatPriceInUsd(price * strBtcPrice);
+}
+
+function formatPriceInUsd(fPrice) {
+	let price_in_usd = fPrice.toFixed(8);
 	let arr = price_in_usd.split('.');
 	let int = arr[0];
 	let frac = arr[1];
