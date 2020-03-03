@@ -41,9 +41,9 @@ function getFormattedAverage(name) {
 	let avg = getAverage(name);
 	if (name.endsWith('_BTC'))
 		return avg.toFixed(8);
-	if (name.endsWith('_USD'))
-		return formatPriceInUsd(avg);
-	return avg.toFixed(8);
+	if (name.endsWith('_GBYTE'))
+		return avg.toFixed(9);
+	return formatPriceToPrecision(avg);
 }
 
 function addMAs(datafeed) {
@@ -242,20 +242,22 @@ function getCoinMarketCapData(datafeed, cb){
 }
 
 function getPriceInUsd(price, strBtcPrice){
-	return formatPriceInUsd(price * strBtcPrice);
+	return formatPriceToPrecision(price * strBtcPrice);
 }
 
-function formatPriceInUsd(fPrice) {
-	let price_in_usd = fPrice.toFixed(8);
+function formatPriceToPrecision(fPrice) {
+	let price_in_usd = fPrice.toFixed(18);
 	let arr = price_in_usd.split('.');
 	let int = arr[0];
-	let frac = arr[1];
-	if (int > 0 || frac[0] !== '0')
+	let frac = arr[1].replace(Number(arr[1]).toFixed(0), '');
+	if (int.length > 6)
+		price_in_usd = parseFloat(price_in_usd).toFixed(0);
+	else if (int > 0 || frac[0] !== '0')
 		price_in_usd = parseFloat(price_in_usd).toFixed(6-int.length);
 	else if (frac[1] !== '0')
-		price_in_usd = parseFloat(price_in_usd).toFixed(6);
-	else if (frac[2] !== '0')
 		price_in_usd = parseFloat(price_in_usd).toFixed(7);
+	else 
+		price_in_usd = parseFloat(price_in_usd).toFixed(5+frac.length);
 	return price_in_usd;
 }
 
