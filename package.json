@@ -19,6 +19,9 @@
     "url": "git://github.com/byteball/obyte-data-feed.git",
     "type": "git"
   },
+  "scripts": {
+    "test": "node test/format-price.js"
+  },
   "bugs": {
     "url": "https://github.com/byteball/obyte-data-feed/issues"
   },
@@ -28,8 +31,8 @@
   },
   "dependencies": {
     "async": "^1.5.2",
-    "ocore": "git+https://github.com/byteball/ocore.git",
     "headless-obyte": "git+https://github.com/byteball/headless-obyte.git",
-    "request": "^2.79.0"
+    "ocore": "git+https://github.com/byteball/ocore.git",
+    "request": "^2.88.2"
   }
 }

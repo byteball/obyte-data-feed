@@ -15,7 +15,8 @@ var eventBus = require('ocore/event_bus.js');
 var objectHash = require('ocore/object_hash.js');
 var request = require('request');
 var async = require('async');
-var notifications = require('./notifications.js');
+var notifications = require('./modules/notifications.js');
+var price = require('./modules/price.js');
 
 const POSTING_PERIOD = 600*1000;
 
@@ -41,9 +42,9 @@ function getFormattedAverage(name) {
 	let avg = getAverage(name);
 	if (name.endsWith('_BTC'))
 		return avg.toFixed(8);
-	if (name.endsWith('_USD'))
-		return formatPriceInUsd(avg);
-	return avg.toFixed(8);
+	if (name.endsWith('_GBYTE'))
+		return avg.toFixed(9);
+	return price.formatPriceToPrecision(avg);
 }
 
 function addMAs(datafeed) {
@@ -259,21 +260,7 @@ function getCoinMarketCapData(datafeed, cb){
 }
 
 function getPriceInUsd(price, strBtcPrice){
-	return formatPriceInUsd(price * strBtcPrice);
-}
-
-function formatPriceInUsd(fPrice) {
-	let price_in_usd = fPrice.toFixed(8);
-	let arr = price_in_usd.split('.');
-	let int = arr[0];
-	let frac = arr[1];
-	if (int > 0 || frac[0] !== '0')
-		price_in_usd = parseFloat(price_in_usd).toFixed(6-int.length);
-	else if (frac[1] !== '0')
-		price_in_usd = parseFloat(price_in_usd).toFixed(6);
-	else if (frac[2] !== '0')
-		price_in_usd = parseFloat(price_in_usd).toFixed(7);
-	return price_in_usd;
+	return price.formatPriceToPrecision(price * strBtcPrice);
 }
 
 function mergeAssoc(dest, src){
