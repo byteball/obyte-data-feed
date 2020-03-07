@@ -12,15 +12,11 @@ function formatPriceToPrecision(fPrice, accuracy = 6) {
 	let frac = arr[1].replace(new RegExp(Number(arr[1]).toFixed(0) + '$'), '');
 	if (int.length > accuracy)
 		price_result = parseFloat(price_result).toFixed(0);
-	else if (int > 0)
-		price_result = parseFloat(price_result).toFixed(accuracy-int.length);
-	else if (frac[0] !== '0')
-		price_result = parseFloat(price_result).toFixed(accuracy);
-	else if (frac[1] !== '0')
-		price_result = parseFloat(price_result).toFixed(accuracy+1);
-	else 
+	else if (fPrice >= 0.01 || frac.length < accuracy)
+		price_result = parseFloat(price_result).toPrecision(accuracy);
+	else
 		price_result = parseFloat(price_result).toFixed(accuracy+frac.length);
-	return price_result;
+	return price_result.replace(/(\.[0-9]*[1-9])0+$|\.0*$/,'$1');
 }
 
 exports.formatPriceToPrecision = formatPriceToPrecision;
