@@ -22,6 +22,9 @@ exports.ma_length = 10;
 exports.maPairs = ['GBYTE_USD', 'GBYTE_BTC'];
 exports.bWantNewPeers = false;
 
+// override in conf.json
+exports.CMC_API_KEY = '';
+
 exports.KEYS_FILENAME = 'keys.json';
 
 console.log('finished price oracle conf');

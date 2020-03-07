@@ -211,15 +211,32 @@ function getYahooDataWithRetries(datafeed, cb){
 }
 
 function getCoinMarketCapGlobalData(datafeed, cb){
-	var apiUri = 'https://api.coinmarketcap.com/v1/global/';
-	request(apiUri, function (error, response, body){
-		if (!error && response.statusCode == 200) {
-			let global_data = JSON.parse(body);
-			datafeed['TOTAL_CAP'] = (global_data.total_market_cap_usd/1e9).toFixed(3);
-			datafeed['BTC_PERCENTAGE'] = global_data.bitcoin_percentage_of_market_cap.toString();
+//	var apiUri = 'https://api.coinmarketcap.com/v1/global/';
+	const requestOptions = {
+		method: 'GET',
+		uri: 'https://pro-api.coinmarketcap.com/v1/global-metrics/quotes/latest',
+		qs: {
+			'convert': 'USD'
+		},
+		headers: {
+			'X-CMC_PRO_API_KEY': conf.CMC_API_KEY
+		},
+		json: true,
+		gzip: true
+	};
+	request(requestOptions, function (error, response, body) {
+		try {
+			if (!error && response.statusCode == 200) {
+				datafeed['TOTAL_CAP'] = (body.data.quote.USD.total_market_cap / 1e9).toFixed(3);
+				datafeed['BTC_PERCENTAGE'] = body.data.btc_dominance.toString();
+				datafeed['ETH_PERCENTAGE'] = body.data.eth_dominance.toString();
+			}
+			else
+				notifications.notifyAdminAboutPostingProblem("getting coinmarketcap global data failed: " + error + ", status=" + (response ? response.statusCode : '?'));
 		}
-		else
-			notifications.notifyAdminAboutPostingProblem("getting coinmarketcap global data failed: "+error+", status="+(response ? response.statusCode : '?'));
+		catch (e) {
+			notifications.notifyAdminAboutPostingProblem("parsing CMC data failed: " + e + ", body: " + JSON.stringify(body, null, '\t'));
+		}
 		cb();
 	});
 }
