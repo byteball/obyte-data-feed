@@ -9,7 +9,7 @@ function formatPriceToPrecision(fPrice, accuracy = 6) {
 	let price_result = fPrice.toFixed(18);
 	let arr = price_result.split('.');
 	let int = arr[0];
-	let frac = arr[1].replace(Number(arr[1]).toFixed(0), '');
+	let frac = arr[1].replace(new RegExp(Number(arr[1]).toFixed(0) + '$'), '');
 	if (int.length > accuracy)
 		price_result = parseFloat(price_result).toFixed(0);
 	else if (int > 0)
