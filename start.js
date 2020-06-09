@@ -259,8 +259,8 @@ function getCoinMarketCapData(datafeed, cb){
 	});
 }
 
-function getPriceInUsd(price, strBtcPrice){
-	return price.formatPriceToPrecision(price * strBtcPrice);
+function getPriceInUsd(p, strBtcPrice){
+	return price.formatPriceToPrecision(p * strBtcPrice);
 }
 
 function mergeAssoc(dest, src){
