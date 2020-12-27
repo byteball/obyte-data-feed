@@ -137,7 +137,15 @@ async function initJob(){
 	await initPrevDatafeeds();
 
 	runJob();
-	setInterval(runJob, POSTING_PERIOD);
+//	setInterval(runJob, POSTING_PERIOD);
+	
+	function getRandomTimeout(min, max) {
+		return Math.round(min * 60 * 1000 + (max - min) * 60 * 1000 * Math.random());
+	}
+
+	function scheduleNextPosting() {
+		setTimeout(runJob, getRandomTimeout(5, 35));
+	}
 		
 	function runJob(){
 		console.log("DataFeed: job started");
@@ -148,6 +156,7 @@ async function initJob(){
 			function(cb){ getCoinMarketCapGlobalData(datafeed, cb) }
 		//	function(cb){ getCoinMarketCapData(datafeed, cb) }
 		], function(){
+			scheduleNextPosting();
 			if (Object.keys(datafeed).length === 0) // all data sources failed, nothing to post
 				return console.log('nothing to post');
 			datafeed = removeUnchanged(datafeed);
