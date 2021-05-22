@@ -291,7 +291,12 @@ function getCryptoCoinData(datafeed, cb){
 				if (err)
 					return cb();
 				mergeAssoc(datafeed, bittrexData);
-				cb();
+				getBinanceData(strBtcPrice, function(err, binanceData){
+					if (err)
+						return cb();
+					mergeAssoc(datafeed, binanceData);
+					cb();
+				});
 			});
 		});
 	});
@@ -384,6 +389,36 @@ function getBittrexData(strBtcPrice, cb){
 		}
 		else
 			onError("getting bittrex data failed: "+error+", status="+(response ? response.statusCode : '?'));
+	});
+}
+
+function getBinanceData(strBtcPrice, cb){
+	function onError(err){
+		notifications.notifyAdminAboutPostingProblem(err);
+		cb(err);
+	}
+	var datafeed = {};
+	const apiUri = 'https://api.binance.com/api/v3/ticker/price';
+	request(apiUri, function (error, response, body){
+		if (!error && response.statusCode == 200) {
+			try{
+				var prices = JSON.parse(body);
+			}
+			catch(e){
+				return onError(e.toString());
+			}
+			if (!prices)
+				return onError('bad rates from binance');
+			for (let priceInfo of prices) {
+				if (priceInfo.symbol === 'BNBBTC')
+					datafeed['BNB_BTC'] = priceInfo.price;
+				if (priceInfo.symbol === 'BNBUSDT')
+					datafeed['BNB_USD'] = priceInfo.price;
+			}
+			cb(null, datafeed);
+		}
+		else
+			onError("getting binance data failed: "+error+", status="+(response ? response.statusCode : '?'));
 	});
 }
 
