@@ -222,6 +222,7 @@ function getYahooDataWithRetries(datafeed, cb){
 
 function getCoinMarketCapGlobalData(datafeed, cb){
 //	var apiUri = 'https://api.coinmarketcap.com/v1/global/';
+	console.log('getting CMC global data');
 	const requestOptions = {
 		method: 'GET',
 		uri: 'https://pro-api.coinmarketcap.com/v1/global-metrics/quotes/latest',
@@ -307,6 +308,7 @@ function getBitfinexBtcPrice(cb){
 		notifications.notifyAdminAboutPostingProblem(err);
 		cb(err);
 	}
+	console.log('getting bitfinex data');
 	var apiUri = 'https://api.bitfinex.com/v1/pubticker/btcusd';
 	request(apiUri, function (error, response, body){
 		if (!error && response.statusCode == 200) {
@@ -327,6 +329,7 @@ function getPoloniexData(strBtcPrice, cb){
 		notifications.notifyAdminAboutPostingProblem(err);
 		cb(err);
 	}
+	console.log('getting polo data');
 	var datafeed = {};
 	const apiUri = 'https://poloniex.com/public?command=returnTicker';
 	request(apiUri, function (error, response, body){
@@ -361,6 +364,7 @@ function getBittrexData(strBtcPrice, cb){
 		notifications.notifyAdminAboutPostingProblem(err);
 		cb(err);
 	}
+	console.log('getting bittrex data');
 	var datafeed = {};
 	const apiUri = 'https://bittrex.com/api/v1.1/public/getmarketsummaries';
 	request(apiUri, function (error, response, body){
@@ -397,6 +401,7 @@ function getBinanceData(strBtcPrice, cb){
 		notifications.notifyAdminAboutPostingProblem(err);
 		cb(err);
 	}
+	console.log('getting binance data');
 	var datafeed = {};
 	const apiUri = 'https://api.binance.com/api/v3/ticker/price';
 	request(apiUri, function (error, response, body){
