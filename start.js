@@ -366,7 +366,8 @@ function getBittrexData(strBtcPrice, cb){
 	}
 	console.log('getting bittrex data');
 	var datafeed = {};
-	const apiUri = 'https://bittrex.com/api/v1.1/public/getmarketsummaries';
+	const apiUri = 'https://api.bittrex.com/v3/markets/tickers';
+//	const apiUri = 'https://bittrex.com/api/v1.1/public/getmarketsummaries';
 	request(apiUri, function (error, response, body){
 		if (!error && response.statusCode == 200) {
 			try{
@@ -378,12 +379,10 @@ function getBittrexData(strBtcPrice, cb){
 			if (!arrCoinInfos)
 				return onError('bad rates from bittrex');
 			arrCoinInfos.forEach(coinInfo => {
-				let price = coinInfo.Last; // number
+				let price = coinInfo.lastTradeRate; // number
 				if (!price)
 					return;
-				let arrParts = coinInfo.MarketName.split('-');
-				let market = arrParts[0];
-				let coin = arrParts[1];
+				let [coin, market] = coinInfo.symbol.split('-');
 				if (market !== 'BTC')
 					return;
 				datafeed[coin+'_BTC'] = price.toFixed(8);
