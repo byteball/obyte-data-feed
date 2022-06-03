@@ -284,10 +284,10 @@ function getCryptoCoinData(datafeed, cb){
 		if (err)
 			return cb();
 		datafeed['BTC_USD'] = strBtcPrice;
-		getPoloniexData(strBtcPrice, function(err, poloData){
-			if (err)
-				return cb();
-			mergeAssoc(datafeed, poloData);
+	//	getPoloniexData(strBtcPrice, function(err, poloData){
+	//		if (err)
+	//			return cb();
+	//		mergeAssoc(datafeed, poloData);
 			getBittrexData(strBtcPrice, function(err, bittrexData){
 				if (err)
 					return cb();
@@ -299,7 +299,7 @@ function getCryptoCoinData(datafeed, cb){
 					cb();
 				});
 			});
-		});
+	//	});
 	});
 }
 
