@@ -371,7 +371,7 @@ function getBittrexData(strBtcPrice, cb){
 	request(apiUri, function (error, response, body){
 		if (!error && response.statusCode == 200) {
 			try{
-				var arrCoinInfos = JSON.parse(body).result;
+				var arrCoinInfos = JSON.parse(body);
 			}
 			catch(e){
 				return onError(e.toString());
@@ -385,7 +385,7 @@ function getBittrexData(strBtcPrice, cb){
 				let [coin, market] = coinInfo.symbol.split('-');
 				if (market !== 'BTC')
 					return;
-				datafeed[coin+'_BTC'] = price.toFixed(8);
+				datafeed[coin+'_BTC'] = (+price).toFixed(8);
 				datafeed[coin+'_USD'] = getPriceInUsd(price, strBtcPrice);
 			});
 			cb(null, datafeed);
