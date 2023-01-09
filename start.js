@@ -69,7 +69,7 @@ function readLastDataFeedValue(address, feed_name, max_mci, handleResult) {
 	if (!handleResult)
 		return new Promise(resolve => readLastDataFeedValue(address, feed_name, max_mci, resolve));
 	const data_feeds = require('ocore/data_feeds.js');
-	data_feeds.readDataFeedValue([address], feed_name, null, 0, max_mci, false, 'last', objResult => {
+	data_feeds.readDataFeedValue([address], feed_name, null, 0, max_mci, false, 'last', 0, objResult => {
 		handleResult({ value: objResult.value, mci: objResult.mci });
 	});
 }
