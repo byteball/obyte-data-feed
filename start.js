@@ -27,6 +27,10 @@ var prevDatafeeds = [];
 headlessWallet.setupChatEventHandlers();
 
 
+function wait(ms) {
+	return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 function createFloatNumberProcessor(decimalPointPrecision){
 	var decimalPointMult = Math.pow(10, decimalPointPrecision);
 	return function processValue(value){
@@ -133,6 +137,11 @@ async function initJob(){
 	else
 		dataFeedAddress = conf.dataFeedAddress;
 	console.log("DataFeed address: " + dataFeedAddress);
+	
+	const network = require('ocore/network.js');
+	await wait(10 * 1000);
+	await network.waitUntilCatchedUp();
+	console.log('catched up');
 	
 	await initPrevDatafeeds();
 
