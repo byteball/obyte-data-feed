@@ -427,6 +427,10 @@ function getBinanceData(strBtcPrice, cb){
 					datafeed['BNB_BTC'] = priceInfo.price;
 				if (priceInfo.symbol === 'BNBUSDT')
 					datafeed['BNB_USD'] = priceInfo.price;
+				if (priceInfo.symbol === 'KAVABTC')
+					datafeed['KAVA_BTC'] = priceInfo.price;
+				if (priceInfo.symbol === 'KAVAUSDT')
+					datafeed['KAVA_USD'] = priceInfo.price;
 			}
 			cb(null, datafeed);
 		}
