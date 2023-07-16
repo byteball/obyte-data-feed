@@ -38,3 +38,4 @@ Session.vim
 
 .env
 package-lock.json
+yarn.lock

@@ -17,6 +17,7 @@ var request = require('request');
 var async = require('async');
 var notifications = require('./modules/notifications.js');
 var price = require('./modules/price.js');
+const kava = require('./modules/kava.js');
 
 const POSTING_PERIOD = 600*1000;
 
@@ -301,10 +302,11 @@ function getCryptoCoinData(datafeed, cb){
 				if (err)
 					return cb();
 				mergeAssoc(datafeed, bittrexData);
-				getBinanceData(strBtcPrice, function(err, binanceData){
+				getBinanceData(strBtcPrice, async function(err, binanceData){
 					if (err)
 						return cb();
 					mergeAssoc(datafeed, binanceData);
+					await addKavaData(datafeed);
 					cb();
 				});
 			});
@@ -437,6 +439,16 @@ function getBinanceData(strBtcPrice, cb){
 		else
 			onError("getting binance data failed: "+error+", status="+(response ? response.statusCode : '?'));
 	});
+}
+
+async function addKavaData(datafeed) {
+	try {
+		const p = await kava.getLinePriceInGbyte();
+		datafeed['LINE_GBYTE'] = price.formatPriceToPrecision(p);
+	}
+	catch (e) {
+		console.log(`fetching prices on Kava failed`, e);
+	}
 }
 
 

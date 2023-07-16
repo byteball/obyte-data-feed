@@ -31,6 +31,7 @@
   },
   "dependencies": {
     "async": "^1.5.2",
+    "ethers": "5",
     "headless-obyte": "git+https://github.com/byteball/headless-obyte.git",
     "ocore": "git+https://github.com/byteball/ocore.git",
     "request": "^2.88.2"
