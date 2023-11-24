@@ -13,6 +13,8 @@ var headlessWallet = require('headless-obyte');
 var conf = require('ocore/conf.js');
 var eventBus = require('ocore/event_bus.js');
 var objectHash = require('ocore/object_hash.js');
+const db = require('ocore/db.js');
+const { executeGetter } = require('ocore/formula/evaluation.js');
 var request = require('request');
 var async = require('async');
 var notifications = require('./modules/notifications.js');
@@ -290,7 +292,7 @@ function mergeAssoc(dest, src){
 }
 
 function getCryptoCoinData(datafeed, cb){
-	getBitfinexBtcPrice(function(err, strBtcPrice){
+	getBitfinexBtcPrice(async function(err, strBtcPrice){
 		if (err)
 			return cb();
 		datafeed['BTC_USD'] = strBtcPrice;
@@ -298,18 +300,15 @@ function getCryptoCoinData(datafeed, cb){
 	//		if (err)
 	//			return cb();
 	//		mergeAssoc(datafeed, poloData);
-			getBittrexData(strBtcPrice, function(err, bittrexData){
-				if (err)
-					return cb();
-				mergeAssoc(datafeed, bittrexData);
-				getBinanceData(strBtcPrice, async function(err, binanceData){
-					if (err)
-						return cb();
-					mergeAssoc(datafeed, binanceData);
-					await addKavaData(datafeed);
-					cb();
-				});
-			});
+		const gbyteData = await getGbyteData(strBtcPrice);
+		mergeAssoc(datafeed, gbyteData);
+		getBinanceData(strBtcPrice, async function(err, binanceData){
+			if (err)
+				return cb();
+			mergeAssoc(datafeed, binanceData);
+			await addKavaData(datafeed);
+			cb();
+		});
 	//	});
 	});
 }
@@ -404,6 +403,14 @@ function getBittrexData(strBtcPrice, cb){
 		else
 			onError("getting bittrex data failed: "+error+", status="+(response ? response.statusCode : '?'));
 	});
+}
+
+async function getGbyteData(strBtcPrice) {
+	console.log('getting GBYTE data');
+	let datafeed = {};
+	datafeed['GBYTE_USD'] = await executeGetter(db,  process.env.testnet ? 'HZCD3MDGCLU2G2IVYGGTMTZXS7DII2O5' : 'MBTF5GG44S3ARJHIZH3DEAB4DGUCHCF6', 'get_price', ['x', 9, 4]);
+	datafeed['GBYTE_BTC'] = datafeed['GBYTE_USD'] / strBtcPrice;
+	return datafeed;
 }
 
 function getBinanceData(strBtcPrice, cb){
