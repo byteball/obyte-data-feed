@@ -408,7 +408,7 @@ function getBittrexData(strBtcPrice, cb){
 async function getGbyteData(strBtcPrice) {
 	console.log('getting GBYTE data');
 	let datafeed = {};
-	datafeed['GBYTE_USD'] = await executeGetter(db,  process.env.testnet ? 'HZCD3MDGCLU2G2IVYGGTMTZXS7DII2O5' : 'MBTF5GG44S3ARJHIZH3DEAB4DGUCHCF6', 'get_price', ['x', 9, 4]);
+	datafeed['GBYTE_USD'] = await executeGetter(db,  process.env.testnet ? 'CFJTSWILG4FJGJJAN7II7FHP2TAFBB57' : 'MBTF5GG44S3ARJHIZH3DEAB4DGUCHCF6', 'get_price', ['x', 9, 4]);
 	datafeed['GBYTE_BTC'] = datafeed['GBYTE_USD'] / strBtcPrice;
 	return datafeed;
 }
