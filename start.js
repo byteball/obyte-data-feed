@@ -156,7 +156,7 @@ async function initJob(){
 	}
 
 	function scheduleNextPosting() {
-		setTimeout(runJob, getRandomTimeout(5, 35));
+		setTimeout(runJob, getRandomTimeout(5, 15));
 	}
 		
 	function runJob(){
