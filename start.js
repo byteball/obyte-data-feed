@@ -156,7 +156,7 @@ async function initJob(){
 	}
 
 	function scheduleNextPosting() {
-		setTimeout(runJob, getRandomTimeout(5, 15));
+		setTimeout(runJob, getRandomTimeout(5, process.env.testnet ? 35 : 15));
 	}
 		
 	function runJob(){
@@ -248,6 +248,7 @@ function getCoinMarketCapGlobalData(datafeed, cb){
 		gzip: true
 	};
 	request(requestOptions, function (error, response, body) {
+		console.log('got response from CMC');
 		try {
 			if (!error && response.statusCode == 200) {
 				datafeed['TOTAL_CAP'] = (body.data.quote.USD.total_market_cap / 1e9).toFixed(3);
@@ -321,6 +322,7 @@ function getBitfinexBtcPrice(cb){
 	console.log('getting bitfinex data');
 	var apiUri = 'https://api.bitfinex.com/v1/pubticker/btcusd';
 	request(apiUri, function (error, response, body){
+		console.log('got response from bitfinex');
 		if (!error && response.statusCode == 200) {
 			console.log("bitfinex response: "+body);
 			let info = JSON.parse(body);
@@ -423,6 +425,7 @@ function getBinanceData(strBtcPrice, cb){
 	var datafeed = {};
 	const apiUri = 'https://api.binance.com/api/v3/ticker/price';
 	request(apiUri, function (error, response, body){
+		console.log('got response from binance');
 		if (!error && response.statusCode == 200) {
 			try{
 				var prices = JSON.parse(body);
