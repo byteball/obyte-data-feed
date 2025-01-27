@@ -444,6 +444,12 @@ function getBinanceData(strBtcPrice, cb){
 					datafeed['KAVA_BTC'] = priceInfo.price;
 				if (priceInfo.symbol === 'KAVAUSDT')
 					datafeed['KAVA_USD'] = priceInfo.price;
+				if (priceInfo.symbol === 'ETHBTC')
+					datafeed['ETH_BTC'] = priceInfo.price;
+				if (priceInfo.symbol === 'ETHUSDT')
+					datafeed['ETH_USD'] = priceInfo.price;
+				if (priceInfo.symbol === 'POLUSDT')
+					datafeed['MATIC_USD'] = priceInfo.price;
 			}
 			cb(null, datafeed);
 		}
